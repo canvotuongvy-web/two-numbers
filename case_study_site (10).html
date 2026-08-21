@@ -1,0 +1,951 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#08090B;
+    --panel:#111317;
+    --panel-2:#181B1F;
+    --line:#272B31;
+    --line-soft:#1B1E22;
+    --signal:#5B8CFF;
+    --signal-dim:#152036;
+    --signal-soft:#8FACFF;
+    --paper:#ECEEF1;
+    --muted:#8B8F97;
+    --muted-2:#54585F;
+    --loss:#E2604B;
+    --loss-dim:#331D18;
+    --win:#4FAE7C;
+    --win-dim:#153322;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;background:transparent;}
+  body{
+    background:
+      radial-gradient(ellipse 80% 55% at 18% -8%, rgba(91,140,255,0.11), transparent 55%),
+      radial-gradient(ellipse 65% 50% at 100% 22%, rgba(91,140,255,0.07), transparent 60%),
+      radial-gradient(ellipse 70% 45% at 25% 62%, rgba(91,140,255,0.055), transparent 55%),
+      radial-gradient(ellipse 60% 45% at 90% 92%, rgba(91,140,255,0.06), transparent 58%),
+      linear-gradient(180deg, #0B0F1A 0%, #08090C 38%, #07080A 70%, #06070A 100%);
+    background-attachment:fixed;
+    background-size:100% 100%;
+    color:var(--paper);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--signal-dim);color:var(--paper);}
+
+  .progress{position:fixed;top:0;left:0;height:2px;background:var(--signal);width:0%;z-index:50;transition:width 80ms linear;box-shadow:0 0 8px rgba(91,140,255,0.6);}
+
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);}
+  .eyebrow b{color:var(--signal-soft);font-weight:500;}
+
+  h1,h2,h3{font-family:"Big Shoulders Display",sans-serif;font-weight:700;margin:0;color:var(--paper);letter-spacing:0.002em;}
+  p{margin:0;}
+  a{color:var(--signal-soft);}
+
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity 700ms ease, transform 700ms ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
+    html{scroll-behavior:auto;}
+  }
+
+  /* ============ HERO ============ */
+  .hero{
+    min-height:100svh;
+    display:flex;flex-direction:column;justify-content:center;
+    position:relative;padding:100px 24px 60px;
+    background:
+      radial-gradient(ellipse 75% 50% at 50% 0%, rgba(91,140,255,0.14), transparent 60%),
+      transparent;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+    pointer-events:none;
+  }
+  .hero-inner{max-width:860px;margin:0 auto;width:100%;position:relative;}
+  .hero .eyebrow{margin-bottom:20px;}
+  .hero h1{
+    font-size:clamp(40px,7.2vw,78px);
+    line-height:0.98;max-width:17ch;margin-bottom:22px;letter-spacing:-0.01em;
+    text-transform:uppercase;
+  }
+  .hero h1 span{color:var(--signal-soft);}
+  .hero-sub{font-size:16px;color:var(--muted);max-width:54ch;margin-bottom:8px;}
+  .hero-sub b{color:var(--paper);font-weight:500;}
+  .hero-hint{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted-2);margin-bottom:36px;}
+
+  /* terminal ticker */
+  .terminal{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:22px 24px;}
+  .terminal-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);}
+  .term-time{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);}
+  .term-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .ttab{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.04em;
+        background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:3px;
+        cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 150ms ease;text-align:left;}
+  .ttab:hover{color:var(--paper);border-color:var(--muted);}
+  .ttab.active{border-color:var(--signal);color:var(--paper);background:var(--signal-dim);}
+  .ttab small{display:block;color:var(--muted-2);font-weight:400;font-size:9.5px;margin-top:1px;}
+  .ttab.active small{color:var(--signal-soft);}
+  .tdot{width:6px;height:6px;border-radius:50%;background:var(--muted-2);display:inline-block;flex-shrink:0;}
+  .tdot.live{background:var(--signal);box-shadow:0 0 6px var(--signal);}
+  .ttab:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+
+  .term-mode[hidden]{display:none;}
+  .term-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .term-col{border-left:2px solid var(--line-soft);padding-left:16px;}
+  .term-col.watching{border-left-color:var(--loss);}
+  .term-label{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;display:block;}
+  .term-label small{display:block;font-size:10px;color:var(--muted-2);margin-top:2px;text-transform:none;letter-spacing:0;}
+  .term-num{font-family:"Big Shoulders Display",sans-serif;font-size:clamp(30px,4.6vw,42px);font-weight:700;color:var(--signal-soft);line-height:1;}
+  .term-num.watching{color:var(--loss);}
+  .term-bar-track{height:5px;background:var(--panel-2);border-radius:3px;margin-top:12px;position:relative;overflow:visible;}
+  .term-bar-fill{height:100%;width:0%;background:var(--signal);border-radius:3px;transition:width 1400ms cubic-bezier(.2,.8,.2,1);}
+  .term-bar-fill.watching{background:var(--loss);}
+  .term-thresh{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--paper);opacity:0.4;}
+  .term-foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);}
+  .cursor-blink{display:inline-block;width:7px;height:15px;background:var(--signal-soft);margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:-2px;}
+  @keyframes blink{50%{opacity:0;}}
+  @media (prefers-reduced-motion:reduce){.cursor-blink{animation:none;}}
+
+  .term-input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--paper);
+              font-family:"Big Shoulders Display",sans-serif;font-size:clamp(20px,3.2vw,28px);font-weight:700;
+              padding:8px 10px;border-radius:3px;margin-top:2px;}
+  .term-input.eq{color:var(--loss);}
+  .term-input:focus{outline:none;border-color:var(--signal);}
+  .term-input::placeholder{color:var(--muted-2);}
+  .term-inline-input{width:60px;background:var(--panel-2);border:1px solid var(--line);color:var(--signal-soft);
+              font-family:"IBM Plex Mono",monospace;font-size:12px;padding:2px 6px;border-radius:3px;}
+
+  .scroll-cue{margin-top:44px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);letter-spacing:0.1em;text-transform:uppercase;text-align:center;}
+
+  @media(max-width:600px){
+    .term-grid{grid-template-columns:1fr;gap:20px;}
+    .term-col{border-left:none;border-top:2px solid var(--line-soft);padding-left:0;padding-top:14px;}
+    .term-col.watching{border-top-color:var(--loss);}
+  }
+
+  /* ============ SECTIONS ============ */
+  section.sect{padding:92px 0;border-top:1px solid var(--line-soft);}
+  .sect-head{margin-bottom:40px;max-width:64ch;}
+  .sect-head .eyebrow{margin-bottom:14px;}
+  .sect-head h2{font-size:clamp(28px,4.6vw,44px);line-height:1.05;margin-bottom:14px;text-transform:uppercase;}
+  .sect-head p.lede{font-size:16px;color:var(--muted);max-width:58ch;}
+  .body-text{font-size:15.5px;color:#C4C6CB;max-width:62ch;}
+  .body-text + .body-text{margin-top:16px;}
+  .body-text b{color:var(--paper);font-weight:500;}
+  .body-text i{color:var(--paper);font-style:italic;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin:38px 0;}
+  .stat{background:var(--ink);padding:18px 18px 16px;}
+  .stat-num{font-family:"Big Shoulders Display",sans-serif;font-size:30px;color:var(--signal-soft);font-weight:700;line-height:1;}
+  .stat-label{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;}
+  @media(max-width:700px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+
+  .regime-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:34px 0 30px;}
+  .rc{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px;border-top:2px solid var(--muted-2);}
+  .rc.technical{border-top-color:var(--muted);}
+  .rc.scalp{border-top-color:var(--signal);}
+  .rc.panic{border-top-color:var(--loss);}
+  .rc-name{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .rc-desc{font-size:13.5px;color:#AEB1B7;line-height:1.55;}
+  @media(max-width:700px){.regime-cards{grid-template-columns:1fr;}}
+
+  .checklist{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+  .checklist span{border:1px solid var(--line);padding:5px 10px;border-radius:3px;}
+  .goto-explore{display:inline-block;margin-top:24px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--signal-soft);border-bottom:1px dashed var(--signal-soft);padding-bottom:2px;cursor:pointer;text-decoration:none;}
+
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--signal);border-radius:3px;padding:22px 24px;margin-top:32px;}
+  .callout .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--signal-soft);margin-bottom:10px;}
+  .callout p{font-size:14.5px;color:#C4C6CB;line-height:1.6;}
+  .callout .tag-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .mini-tag{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:3px 8px;border-radius:3px;background:var(--win-dim);color:var(--win);}
+  .mini-tag.bad{background:var(--loss-dim);color:var(--loss);}
+
+  /* secondary grade table */
+  .grade-panel{margin-top:30px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px 20px 8px;}
+  .grade-panel-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .grade-panel-head .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+  .grade-scroll{overflow-x:auto;}
+  table.grade-tbl{width:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:12px;min-width:460px;}
+  .grade-tbl th{text-align:left;font-weight:500;color:var(--muted-2);text-transform:uppercase;font-size:9.5px;letter-spacing:0.06em;padding:0 10px 8px;border-bottom:1px solid var(--line);}
+  .grade-tbl td{padding:7px 10px;border-bottom:1px solid var(--line-soft);color:var(--muted);}
+  .grade-tbl td.result-pos{color:var(--win);} .grade-tbl td.result-neg{color:var(--loss);}
+  .gchip{display:inline-block;font-size:10px;padding:1px 7px;border-radius:3px;font-weight:600;}
+  .gchip.A{background:var(--win-dim);color:var(--win);}
+  .gchip.B{background:var(--signal-dim);color:var(--signal-soft);}
+  .gchip.C{background:var(--panel-2);color:var(--muted);}
+  .gchip.E,.gchip.F{background:var(--loss-dim);color:var(--loss);}
+  .grade-foot{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);padding:12px 0 10px;}
+  .grade-insight{margin-top:14px;font-size:14px;color:var(--paper);border-top:1px dashed var(--line);padding-top:14px;}
+
+  /* equity curve chart */
+  .chart-wrap{margin-top:34px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:22px 22px 18px;position:relative;}
+  .chart-wrap svg{width:100%;height:auto;display:block;overflow:visible;}
+  .chart-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);}
+  .chart-legend span{display:inline-flex;align-items:center;gap:7px;}
+  .lg-line{width:14px;height:2px;display:inline-block;border-radius:1px;}
+  .chart-tooltip{position:absolute;pointer-events:none;background:var(--ink);border:1px solid var(--line);border-radius:4px;
+    padding:8px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--paper);white-space:nowrap;
+    opacity:0;transform:translate(-50%,calc(-100% - 10px));transition:opacity 120ms ease;z-index:10;}
+  .chart-tooltip.show{opacity:1;}
+  .chart-tooltip .tt-cum{font-weight:600;}
+  .eq-pt{cursor:pointer;}
+  .eq-pt:hover, .eq-pt:focus{ r:6; }
+
+  /* gauge (breach) */
+  .gauge-wrap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:24px 24px 20px;margin-top:34px;position:relative;}
+  .gauge-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;}
+  .gauge-head .lim-edit{color:var(--paper);text-transform:none;letter-spacing:0;}
+  .gauge-track{position:relative;height:34px;background:var(--panel-2);border-radius:4px;overflow:hidden;}
+  .gauge-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--signal-dim),var(--loss));transition:width 900ms cubic-bezier(.2,.8,.2,1);}
+  .gauge-thresh{position:absolute;top:0;bottom:0;width:2px;background:var(--paper);opacity:0.5;transition:left 300ms ease;}
+  .gauge-thresh-label{position:absolute;top:-20px;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);white-space:nowrap;transform:translateX(-50%);}
+  .gauge-ticks{display:flex;margin-top:14px;gap:3px;}
+  .g-tick{flex:1;height:10px;border-radius:2px;background:var(--line);cursor:pointer;position:relative;transition:transform 120ms ease;}
+  .g-tick.hit{background:var(--loss);}
+  .g-tick.win{background:var(--win);}
+  .g-tick.breach{outline:2px solid var(--paper);outline-offset:1px;}
+  .g-tick:hover{transform:scaleY(1.6);}
+  .gauge-status{margin-top:16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);opacity:0;transition:opacity 500ms ease;}
+  .gauge-status.show{opacity:1;}
+  .gauge-status b{color:var(--loss);}
+
+  .law-box{margin-top:34px;background:linear-gradient(180deg, rgba(91,140,255,0.08), rgba(91,140,255,0.02) 60%), var(--panel);border:1px solid var(--line);border-left:3px solid var(--signal);border-radius:4px;padding:26px 26px 24px;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--paper);line-height:1.85;box-shadow:0 10px 30px rgba(91,140,255,0.08);}
+  .law-box .kw{color:var(--signal-soft);font-weight:600;}
+  .law-box .kw2{color:var(--paper);font-weight:600;}
+  .law-kicker{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--signal-soft);margin-bottom:14px;display:block;}
+
+  /* explore: live/demo */
+  .explore-mode[hidden]{display:none;}
+  .filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:12px;padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;transition:all 150ms ease;}
+  .chip:hover{border-color:var(--muted);color:var(--paper);}
+  .chip.active{background:var(--paper);color:var(--ink);border-color:var(--paper);}
+  .chip:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+  table{width:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:12.5px;}
+  thead th{text-align:left;font-weight:500;color:var(--muted-2);text-transform:uppercase;font-size:10px;letter-spacing:0.06em;padding:0 10px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;}
+  thead th:hover{color:var(--muted);}
+  tbody td{padding:9px 10px;border-bottom:1px solid var(--line-soft);}
+  tbody tr:hover td{background:var(--panel);}
+  .tag{font-size:10px;padding:2px 7px;border-radius:3px;letter-spacing:0.03em;}
+  .tag.technical{background:var(--panel-2);color:var(--muted);}
+  .tag.scalp{background:var(--signal-dim);color:var(--signal-soft);}
+  .tag.panic{background:var(--loss-dim);color:var(--loss);}
+  .tbl-count{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);margin-top:10px;display:block;}
+  tr.trade-row.has-note{cursor:pointer;}
+  .note-toggle{display:inline-block;width:14px;color:var(--signal-soft);font-weight:600;}
+  tr.note-row td{padding:2px 10px 16px 24px;border-bottom:1px solid var(--line-soft);background:var(--panel);color:#C4C6CB;font-family:"IBM Plex Sans",sans-serif;font-size:13px;line-height:1.65;}
+  tr.note-row[hidden]{display:none;}
+
+  .demo-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:20px;}
+  .demo-form select, .demo-form input{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--paper);padding:8px 10px;border-radius:3px;
+  }
+  .demo-form input{width:104px;}
+  .demo-form input:focus, .demo-form select:focus{outline:none;border-color:var(--signal);}
+  .demo-add{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--signal-dim);border:1px solid var(--signal);color:var(--signal-soft);padding:8px 14px;border-radius:3px;cursor:pointer;}
+  .demo-add:hover{background:var(--signal);color:var(--ink);}
+  .demo-reset{font-family:"IBM Plex Mono",monospace;font-size:11px;background:transparent;border:1px solid var(--line);color:var(--muted);padding:6px 12px;border-radius:20px;cursor:pointer;margin-top:16px;}
+  .demo-reset:hover{color:var(--paper);border-color:var(--muted);}
+  .demo-empty{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted-2);border:1px dashed var(--line);border-radius:4px;padding:26px;text-align:center;}
+  .demo-del{background:none;border:none;color:var(--muted-2);cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:13px;}
+  .demo-del:hover{color:var(--loss);}
+
+  .ledger-row{display:grid;grid-template-columns:130px 1fr 130px;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line-soft);}
+  .ledger-row:last-child{border-bottom:none;}
+  .r-name{font-size:14px;font-weight:500;}
+  .r-meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .r-bar-track{position:relative;height:22px;background:var(--panel);border:1px solid var(--line-soft);border-radius:3px;overflow:hidden;cursor:default;}
+  .r-bar-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);}
+  .r-bar-fill{position:absolute;top:0;bottom:0;border-radius:3px;transition:width 900ms cubic-bezier(.2,.8,.2,1);}
+  .r-result{font-family:"IBM Plex Mono",monospace;font-size:15px;text-align:right;font-weight:500;}
+  .pos{color:var(--win);} .neg{color:var(--loss);}
+  @media(max-width:600px){.ledger-row{grid-template-columns:96px 1fr 96px;gap:10px;}.r-result{font-size:12px;}}
+
+  .creds{display:flex;gap:22px;flex-wrap:wrap;margin-top:28px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);}
+  .creds span{border-left:2px solid var(--line);padding-left:10px;}
+  .closing-q{font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:clamp(24px,3.6vw,34px);color:var(--paper);max-width:20ch;margin-top:38px;line-height:1.15;text-transform:uppercase;}
+
+  .pull-quote{font-family:"Big Shoulders Display",sans-serif;font-weight:600;font-size:clamp(24px,3.8vw,34px);line-height:1.16;color:var(--signal-soft);max-width:20ch;margin:40px auto;text-align:center;letter-spacing:-0.01em;}
+  .pull-quote .sub{display:block;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:400;color:var(--muted);letter-spacing:0.02em;margin-top:12px;}
+
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .explore-mode table{min-width:480px;}
+
+  footer{padding:40px 0 60px;font-size:12px;color:var(--muted-2);font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line-soft);}
+  footer .wrap{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px 24px;}
+  footer .credit{color:var(--muted-2);white-space:nowrap;}
+  footer .foot-links{max-width:960px;margin:18px auto 0;padding:0 24px;display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap;}
+  footer .foot-links a{display:inline-flex;align-items:center;gap:6px;color:var(--signal-soft);text-decoration:none;font-size:12.5px;border:1px solid var(--signal-dim);background:var(--signal-dim);padding:8px 16px;border-radius:20px;transition:all .15s ease;}
+  footer .foot-links a:hover{background:var(--signal);border-color:var(--signal);color:var(--ink);}
+  @media(max-width:560px){footer .wrap{flex-direction:column;}}
+</style>
+
+<div class="progress" id="progress"></div>
+
+<div class="page">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Prop trading · solo $10K evaluation · <b>post-mortem</b></p>
+      <h1>Two numbers, <span>one screen.</span> Only one was real.</h1>
+      <p class="hero-sub">At 22:48 on the last night of the evaluation, I read the calm number and kept trading. 35 logged trades say what I should've been watching instead — <b>and what "disciplined" actually means.</b></p>
+      <p class="hero-hint">↓ flip to YOURS and try it with your own numbers</p>
+
+      <div class="terminal">
+        <div class="terminal-head">
+          <span class="term-tabs">
+            <button class="ttab active" id="tab-live" onclick="setHeroMode('live')"><i class="tdot"></i><span>MINE · 22:48<small>already gone</small></span></button>
+            <button class="ttab" id="tab-demo" onclick="setHeroMode('demo')"><i class="tdot live"></i><span>YOURS · right now<small>still fixable</small></span></button>
+          </span>
+          <span class="term-time">MT5 · terminal</span>
+        </div>
+
+        <div class="term-mode" id="hero-live">
+          <div class="term-grid">
+            <div class="term-col">
+              <span class="term-label">Net <small>closed trades only — what I was reading</small></span>
+              <div class="term-num" id="tnet">$0<span class="cursor-blink"></span></div>
+              <div class="term-bar-track"><div class="term-bar-fill" id="barnet"></div></div>
+            </div>
+            <div class="term-col watching">
+              <span class="term-label">Equity <small>floating positions included — what the rule reads</small></span>
+              <div class="term-num watching" id="teq">$0</div>
+              <div class="term-bar-track"><div class="term-bar-fill watching" id="bareq"></div><div class="term-thresh" id="threshline"></div></div>
+            </div>
+          </div>
+          <div class="term-foot" id="termfoot">reading the wrong column for room to lose</div>
+        </div>
+
+        <div class="term-mode" id="hero-demo" hidden>
+          <div class="term-grid">
+            <div class="term-col">
+              <span class="term-label">Net <small>your closed P/L, in $</small></span>
+              <input type="number" class="term-input" id="in-net" placeholder="-120" oninput="updateDemo()">
+              <div class="term-bar-track"><div class="term-bar-fill" id="dbarnet"></div></div>
+            </div>
+            <div class="term-col watching">
+              <span class="term-label">Equity <small>your real floating P/L, in $</small></span>
+              <input type="number" class="term-input eq" id="in-eq" placeholder="-540" oninput="updateDemo()">
+              <div class="term-bar-track"><div class="term-bar-fill watching" id="dbareq"></div><div class="term-thresh" id="dthreshline"></div></div>
+            </div>
+          </div>
+          <div class="term-foot" id="demo-verdict">assuming a daily limit of $<input type="number" class="term-inline-input" id="in-lim" value="500" oninput="updateDemo()"> — type both numbers above</div>
+        </div>
+      </div>
+
+      <p class="scroll-cue">↓ 35 trades, 3 decision styles</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+
+    <!-- ============ 01 SETUP ============ -->
+    <section class="sect reveal" id="setup">
+      <div class="sect-head">
+        <p class="eyebrow"><b>01</b> · Before the log</p>
+        <h2>A data analytics student, a spreadsheet habit, and no backtest.</h2>
+        <p class="lede">Reading note: this isn't a trading-strategy pitch — there's no system or edge on offer, and the account still failed. It's a decision-hygiene case study: what an honestly-logged, two-month dataset actually says about how choices degrade under uncertainty.</p>
+      </div>
+      <p class="body-text">I went into this with a Data Analytics degree in progress and a habit I didn't think much of at the time: <b>logging everything.</b> Not a trading habit — a student one. It happened to be the only discipline I brought into the account.</p>
+      <p class="body-text">Everything else was closer to "figure it out live." No backtest. No demo run first — the one demo session on record has me sizing 10 lots on EUR/USD by mistake. Two AI copilots (Claude, Gemini) sat in the chat window through most sessions, disagreed with each other constantly, and were overruled by me about as often as they were right.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-num">$10K</div><div class="stat-label">Evaluation size</div></div>
+        <div class="stat"><div class="stat-num">35</div><div class="stat-label">Trades logged</div></div>
+        <div class="stat"><div class="stat-num">$10.2K</div><div class="stat-label">Peak balance</div></div>
+        <div class="stat"><div class="stat-num">2</div><div class="stat-label">AI copilots, disagreeing</div></div>
+      </div>
+      <p class="body-text">Two months on the calendar, single-digit days where I actually sat down and traded with intent. That's the honest scope — small enough that any one bad night can dominate the sample, which matters later.</p>
+      <p class="body-text" style="margin-top:16px;font-size:13px;color:var(--muted);">Quick context if prop-firm evaluations are new to you: I paid a one-time ~$77 (2,000,000 VND) for a shot at trading someone else's $10K. Hit the profit target without ever letting daily losses top 5% or total losses top 10%, and it becomes a real, funded account. Miss either number — for any reason, on any night — and the whole thing's over. No partial credit, no do-over.</p>
+    </section>
+
+    <!-- ============ 02 METHOD ============ -->
+    <section class="sect reveal" id="method">
+      <div class="sect-head">
+        <p class="eyebrow"><b>02</b> · Method</p>
+        <h2>Three ways I placed an order — graded before I knew the outcome.</h2>
+        <p class="lede">Every trade got sorted by how the decision was actually made, not by how it turned out. Hover a bar below for the win rate behind it.</p>
+      </div>
+      <div class="regime-cards">
+        <div class="rc technical">
+          <div class="rc-name">Technical</div>
+          <div class="rc-desc">Full checklist, rule-based, mostly set-and-forget. Graded live against six conditions before the trade closed.</div>
+        </div>
+        <div class="rc scalp">
+          <div class="rc-name">Discretionary / scalp</div>
+          <div class="rc-desc">No checklist. Entries and exits adjusted live off price action and feel, across two separate sessions six weeks apart.</div>
+        </div>
+        <div class="rc panic">
+          <div class="rc-name">Panic</div>
+          <div class="rc-desc">The final night. Revenge-sized after two missed fills at the top of a runaway trend, one thesis held ten trades straight.</div>
+        </div>
+      </div>
+      <p class="body-text" style="margin-bottom:6px;">The technical checklist, for reference:</p>
+      <div class="checklist">
+        <span>EMA alignment</span><span>RSI confirmation</span><span>R:R ≥ 1 : 1.3</span>
+        <span>No chasing price</span><span>SL ≥ 1.5× ATR (2–2.5× on gold)</span><span>Risk 0.75–1% / trade</span>
+      </div>
+
+      <p class="body-text" style="margin-top:26px;margin-bottom:6px;">And underneath all three styles, the same standing rules, checked before anything else:</p>
+      <div class="checklist">
+        <span>ForexFactory calendar reviewed before every session</span><span>London + New York only — no Asian session, no random hours</span><span>No overnight or weekend holds</span>
+      </div>
+      <p class="body-text" style="margin-top:10px;font-size:13px;color:var(--muted);">Every rule on that list held — no exceptions, not even from the night that begged hardest for one. The single largest win in the log (Day 54, +$239) still closed same-session, 23:15, after outlasting two rounds of "cut it now" from Gemini. That's not the twist. The twist is below.</p>
+
+      <div style="margin-top:44px;">
+        <p class="eyebrow" style="margin-bottom:16px;">Net result by regime, USD</p>
+        <div id="ledger"></div>
+      </div>
+      <a class="goto-explore" onclick="document.getElementById('explore').scrollIntoView({behavior:'smooth'})">See all 35 trades → jump to the receipts</a>
+    </section>
+
+    <!-- ============ 03 TWIST ============ -->
+    <section class="sect reveal" id="twist">
+      <div class="sect-head">
+        <p class="eyebrow"><b>03</b> · The part that isn't a clean story</p>
+        <h2>The checklist lost money. The gut calls didn't. That's not the lesson either.</h2>
+      </div>
+      <p class="body-text">If the story were "trust your gut, checklists don't work," there'd be a clean trade to point at and say <i>see</i>. There isn't. The cleanest counter-example in the set runs the other way entirely:</p>
+
+      <div class="callout">
+        <div class="k">Day 13 · Buy EUR/USD · 0.35 lots</div>
+        <p>Full checklist. EMA-aligned entry, RSI in range, R:R 1 : 1.51, stop placed under the deepest EMA-50 low, no chasing. Every box ticked — <b>graded A, 5 out of 5, before the outcome was known.</b> It still lost $38.50, because volatility roughly doubled mid-trade in a way no entry-time checklist is built to see.</p>
+        <div class="tag-row"><span class="mini-tag">5/5 checklist score</span><span class="mini-tag bad">Result: loss</span></div>
+      </div>
+
+      <p class="body-text" style="margin-top:26px;">That's not a discipline failure — it's variance a rules-based system is <i>supposed</i> to absorb over a large enough sample, and 15 trades isn't that sample yet. Pull the full grading log and the pattern gets stranger, not simpler:</p>
+
+      <div class="grade-panel">
+        <div class="grade-panel-head">
+          <span class="k">All 15 technical trades, checklist score vs. outcome</span>
+          <span class="k" style="color:var(--muted-2);">scroll →</span>
+        </div>
+        <div class="grade-scroll">
+          <table class="grade-tbl" id="gradeTbl">
+            <thead><tr><th>Day</th><th>R:R</th><th>Score</th><th>Grade</th><th>Result</th></tr></thead>
+            <tbody id="gradeTbody"></tbody>
+          </table>
+        </div>
+        <div class="grade-foot">Grading expanded from 5 to 6 criteria partway through (added SL-distance vs. ATR) — treat Grade as the normalized read, not the raw fraction.</div>
+        <div class="grade-insight">The four <b style="color:var(--signal-soft)">B-grade</b> trades — one box short of perfect — went <b>0 for 3</b>. The four <b style="color:var(--loss)">F-grade</b> trades, missing almost everything, won as often as the A's lost. A perfect checklist score didn't reliably beat a near-perfect one, and a near-perfect one didn't reliably beat a bad one. Score predicted process, not outcome.</div>
+      </div>
+    </section>
+
+    <!-- ============ 04 COMPARE ============ -->
+    <section class="sect reveal" id="compare">
+      <div class="sect-head">
+        <p class="eyebrow"><b>04</b> · Same style, opposite outcome</p>
+        <h2>Day 54 vs. Day 55 — both fully discretionary. Both broke from checklist. One made money.</h2>
+        <p class="lede">This pair is the comparison that actually explains the gap, because "technical vs. feel" doesn't. Hover a point on either line for that trade.</p>
+      </div>
+
+      <div class="chart-wrap" id="eqChartWrap">
+        <svg id="eqChart" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="Cumulative P/L across Day 54 and Day 55"></svg>
+        <div class="chart-tooltip" id="eqTooltip"></div>
+        <div class="chart-legend">
+          <span><span class="lg-line" style="background:var(--win)"></span>Day 54 — 6 trades, mixed direction, +$190.40</span>
+          <span><span class="lg-line" style="background:var(--loss)"></span>Day 55 — 10 trades, all Sell, –$555.30</span>
+        </div>
+      </div>
+
+      <p class="body-text" style="margin-top:30px;"><b>Day 54:</b> bought a dip, sold a top, cut a losing short quickly when the market disagreed, let a winner run to +$239. Six trades, six fresh reads of the tape.</p>
+      <p class="body-text"><b>Day 55:</b> every trade sold the same thesis into a confirmed uptrend. Lot size never shrank after a loss — it held flat, then crept up, then tripled on the last one: 0.09 → 0.09 → 0.09 → 0.09 → 0.09 → 0.10 → 0.12 → 0.10 → 0.10 → 0.30. The market said no ten times. The position size never heard it.</p>
+      <p class="body-text">Same trader, same instrument, same absence of a checklist. The variable isn't technical-vs-feel — it's whether each trade updates on the last one, or repeats it.</p>
+    </section>
+
+    <!-- ============ 05 BREAK ============ -->
+    <section class="sect reveal" id="break">
+      <div class="sect-head">
+        <p class="eyebrow"><b>05</b> · What actually broke</p>
+        <h2>The interface was misleading. That's not the same as being confused.</h2>
+      </div>
+      <p class="body-text">Two missed fills, one tick above the exact top, triggered the size-up — then it ran Day 55's pattern straight to the end: same direction, same thesis, size never shrinking. The whole time, the number I kept glancing at was <b>Net</b> — closed trades only, sitting calm. The number a daily-loss breach actually reads is <b>equity</b>: floating positions included. That gap is real, it's in the log, it's worth a tool. But on its own, it's not the reason — and I don't think it's even the main one.</p>
+
+      <p class="body-text" style="margin-top:22px;">By the time size started climbing, I'd already worked the real number out by hand — roughly –$436, about $64 from the $500 line — and had already gone hunting in a trading community for what time the daily counter resets (4 a.m.). Neither of those is what someone misreading a column does. What gave out wasn't the arithmetic — it was whether the thing on the other side of it still felt worth protecting. A $500 daily allowance, guarding a 5% target that's genuinely hard to hit in a month (plenty of good discretionary traders are happy with 1.5–2%), against a $77 entry fee and a month of watching charts — stops looking like much, somewhere in there.</p>
+
+      <div class="pull-quote">The payout had quietly stopped feeling big enough to defend.<span class="sub">Defending it was the entire job.</span></div>
+
+      <p class="body-text">The two missed fills were the spark, not the cause — landing 1–2 points above the exact top, on an otherwise-correct read, feels unbearable in the moment and means nothing a week later. The final trade, 0.3 lots against nine straight losing sells, wasn't a miscalculation. Looking back, it reads like a decision that had already been made — the size just made it official.</p>
+
+      <p class="body-text" style="margin-top:22px;">I'm still not fully sure I trust my own read of that night. I can point to the numbers I calculated and the times I looked up; I can't point to a clean account of what I was thinking while I did it — and I'd rather say that than paper over it. What I am confident of: this wasn't a comprehension failure. "Wrong column, case closed" would've been the tidier story. It also would've been wrong.</p>
+
+      <div class="gauge-wrap">
+        <div class="gauge-head">
+          <span>Day 55 · cumulative closed P/L</span>
+          <span id="gaugeval">$0</span>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="gaugefill"><div class="gauge-thresh" id="gaugethresh"><span class="gauge-thresh-label">limit</span></div></div></div>
+        <div class="gauge-ticks" id="gaugeticks"></div>
+        <div class="gauge-status" id="gaugestatus"></div>
+        <div class="gauge-head" style="margin-top:18px;margin-bottom:0;">
+          <span class="lim-edit">try a different limit → $<input type="number" class="term-inline-input" id="gauge-lim" value="500" oninput="onGaugeLimChange()"></span>
+        </div>
+      </div>
+
+      <div class="law-box">
+        <span class="law-kicker">The two rules this dataset actually supports</span>
+        <span class="kw2">RULE 1</span> — not "be more disciplined." That's true of almost every trading loss ever and explains none of them specifically.<br><br>
+        <span class="kw">IF</span> N consecutive losses on an unchanged thesis<br>
+        <span class="kw">THEN</span> stop and re-verify the actual risk number before the N+1st trade<br>
+        <span class="kw2">— regardless of whether the approach that day is rules-based or discretionary.</span> Both styles can fail this test; both did, at different points in this same dataset.<br><br>
+        <span class="kw2">RULE 2</span> — the one the first rule doesn't cover.<br><br>
+        <span class="kw">IF</span> the payoff has quietly stopped feeling worth the guard-rail protecting it<br>
+        <span class="kw">THEN</span> that's the exit signal, decided before the session, not the moment size goes up until it feels worth it again.
+      </div>
+    </section>
+
+    <!-- ============ 06 EXPLORE (MINE / YOURS) ============ -->
+    <section class="sect reveal" id="explore">
+      <div class="sect-head">
+        <p class="eyebrow"><b>06</b> · The receipts — or yours</p>
+        <h2>All 35 trades, filterable. Or bring your own.</h2>
+        <p class="lede">Same tool either way: check my story against the data, or run your own trades through the same regime split. Rows marked <span class="note-toggle" style="width:auto;">+</span> expand into the actual order-flow note logged for that trade — not a summary, the real-time read.</p>
+      </div>
+
+      <span class="term-tabs" style="margin-bottom:26px;display:inline-flex;">
+        <button class="ttab active" id="etab-live" onclick="setExploreMode('live')"><i class="tdot"></i><span>MY 35<small>the receipts</small></span></button>
+        <button class="ttab" id="etab-demo" onclick="setExploreMode('demo')"><i class="tdot live"></i><span>YOURS<small>prove me wrong</small></span></button>
+      </span>
+
+      <!-- LIVE -->
+      <div class="explore-mode" id="explore-live">
+        <p class="eyebrow" style="margin-bottom:16px;">Net result by regime, USD</p>
+        <div id="ledger-live"></div>
+        <div style="margin-top:40px;">
+          <div class="filters" id="filters"></div>
+          <div class="tbl-scroll">
+          <table>
+            <thead><tr><th data-key="day">Day</th><th data-key="style">Style</th><th data-key="dir">Dir</th><th data-key="lots">Lots</th><th data-key="result">Result ($)</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          </div>
+          <span class="tbl-count" id="tbl-count"></span>
+        </div>
+      </div>
+
+      <!-- DEMO -->
+      <div class="explore-mode" id="explore-demo" hidden>
+        <div class="demo-form">
+          <select id="d-style"><option value="technical">Technical</option><option value="scalp">Scalp</option><option value="panic">Panic</option></select>
+          <select id="d-dir"><option value="buy">Buy</option><option value="sell">Sell</option></select>
+          <input type="number" id="d-lots" step="0.01" placeholder="Lots">
+          <input type="number" id="d-result" step="0.01" placeholder="Result $">
+          <button class="demo-add" onclick="addDemoTrade()">Add trade</button>
+        </div>
+        <p class="eyebrow" style="margin-bottom:16px;">Net result by regime, USD</p>
+        <div id="demo-ledger"></div>
+        <div id="demo-empty" class="demo-empty">No trades yet — add one above and see your regimes compare.</div>
+        <div id="demo-table-wrap" class="tbl-scroll" style="margin-top:32px;" hidden>
+          <table>
+            <thead><tr><th>Style</th><th>Dir</th><th>Lots</th><th>Result ($)</th><th></th></tr></thead>
+            <tbody id="demo-tbody"></tbody>
+          </table>
+        </div>
+        <button class="demo-reset" onclick="resetDemo()">Reset demo</button>
+      </div>
+
+      <p class="body-text" style="margin-top:52px;">Passing an evaluation on the first attempt happens. Being able to name the actual mechanisms — a real information gap, a payoff that had quietly stopped feeling worth protecting, a thesis held past ten consecutive contradictions — happens less often, mostly because most people don't log enough, or honestly enough, to find them. This started as a trading log. It turned into a small, honest dataset about how decisions actually degrade, which is closer to the kind of problem I like working on anyway.</p>
+
+      <p class="closing-q">What does your data say about the difference between "disciplined" and "right"?</p>
+
+      <div class="creds">
+        <span>Data Analytics · University of Economics and Law</span>
+        <span>IBM · AI &amp; Data Fundamentals</span>
+      </div>
+    </section>
+
+  </main>
+
+  <footer><div class="wrap"><span>Personal MT5 trading log · The5ers 10K evaluation · Jun–Aug 2026 · figures reconstructed from trade-level records</span><span class="credit">© 2026 Vy Can · Data Analyst</span></div><div class="foot-links"><a href="https://www.linkedin.com/in/can-vo-tuong-vy/" target="_blank" rel="noopener">LinkedIn ↗</a><a href="https://v0-vy-portfolio.vercel.app/" target="_blank" rel="noopener">Full portfolio ↗</a></div></footer>
+</div>
+
+<script>
+const trades = [
+  {day:2,style:'technical',dir:'buy',lots:0.75,result:102,score:'5/5',grade:'A',rr:'1:1.33',note:"Gemini said cut it near the open; Claude said hold. I held. Also caught Claude mis-sizing the position that morning — it called for risking $75 on 0.02 lots before correcting itself when I pushed back."},
+  {day:3,style:'technical',dir:'sell',lots:0.75,result:-64.5,score:'3/5',grade:'C',rr:'1:1.07',note:"Sized down from a planned 1.5 lots on pure noise — both wicks were already long before entry. Watched it swing to –$45 mid-trade, stepped away for 15 minutes convinced the account had blown up, came back to find it merely still open. Gemini flagged an early cut twice; I didn't take it, and it hit stop."},
+  {day:3,style:'technical',dir:'buy',lots:0.6,result:-43.8,score:'1/5',grade:'F',rr:'1:0.91',note:"Straight FOMO into a wave the AI had already talked me out of once. The wick came within a couple of pips of stop before reversing — I'd already mentally written the trade off as a loss while watching it happen."},
+  {day:5,style:'technical',dir:'buy',lots:0.2,result:23,score:'0/5',grade:'F',rr:'1:1.02',note:"0.2 lots wasn't caution — I genuinely hadn't learned to size a position yet. Moved TP higher mid-move on nerve rather than a plan."},
+  {day:5,style:'technical',dir:'buy',lots:0.4,result:-62.4,score:'0/5',grade:'F',rr:'1:0.78',note:"Same session, same mistake again — chased the top a second time within the hour."},
+  {day:5,style:'technical',dir:'buy',lots:0.35,result:-53.9,score:'4/5',grade:'B',rr:'1:1.11',note:"Faded a pullback into a long-term long thesis after a bad NFP print for USD, stop set under half the news candle's body. Wrong side of the pullback."},
+  {day:13,style:'technical',dir:'buy',lots:0.35,result:-38.5,score:'5/5',grade:'A',rr:'1:1.51',note:"Ran to within 3 points of TP, reversed, and drifted red for hours. Cut it manually at –37 on Gemini's read and the Friday liquidity clock — price snapped back within three minutes of the cut, which is its own kind of lesson about clean exits on thin evidence."},
+  {day:13,style:'technical',dir:'sell',lots:0.05,result:117.9,score:'5/5',grade:'A',rr:'1:1.50',note:"The5ers dashboard was delayed almost an hour showing stale prices, which briefly looked like the trade hadn't registered at all. Gemini spent the entire hold arguing for an early cut; a minute after the last warning, the setup broke the other way and ran straight through TP."},
+  {day:17,style:'technical',dir:'buy',lots:0.4,result:-19.6,score:'0/5',grade:'F',rr:'1:0.09',note:"Chased a news wave with no setup behind it, lost conviction almost immediately, and cut at –$19 before it had any room to work."},
+  {day:18,style:'technical',dir:'buy',lots:0.08,result:-79.2,score:'4/5',grade:'B',rr:'1:1.90',note:"Right on the structural read, wrong on timing — closed the loss, then watched price rally back to the level called for. This is the trade that surfaced the SL/ATR rule: stop was ~1.25× ATR at entry, under the 1.5–2× floor added to the checklist afterward."},
+  {day:19,style:'technical',dir:'buy',lots:0.03,result:-66.33,score:'2/6',grade:'E',rr:'1:1.04',note:"Moved the stop three times mid-trade, second-guessing where it belonged. Got tagged at almost the exact wick low — the next candle broke even lower anyway, so the extra room wouldn't have saved it."},
+  {day:30,style:'technical',dir:'buy',lots:0.03,result:-45.36,score:'4/6',grade:'B',rr:'1:2.07',note:"Bought a small reclaim wick near the EMA expecting a bounce; price ground lower for hours instead. Not pulling the stop in tighter than planned kept the loss from being worse than it was."},
+  {day:33,style:'technical',dir:'sell',lots:0.04,result:32,score:'3/6',grade:'C',rr:'1:2.26',note:"Wanted the exact top at 4118 but the AI held me out of the first entry; got in later at a still-decent 4110, then cut early into thin end-of-session liquidity instead of pushing for the full move."},
+  {day:34,style:'technical',dir:'buy',lots:0.07,result:-84.5,score:'3.5/6',grade:'C',rr:'1:1.75',note:"Clean, ordinary setup — a 9pm print that favored USD undid it. Nothing to fix in the process here."},
+  {day:34,style:'technical',dir:'buy',lots:0.09,result:126.2,score:'5/6',grade:'A',rr:'1:1.75',note:"Bought the dip correctly, but nerves closed it early at 4040 — price kept running to 4050 without me, roughly $90 left on the table for not trusting a read that was already right."},
+  {day:38,style:'scalp',dir:'buy',lots:0.06,result:81.3,note:"Straightforward dip buy; target set conservatively again, same pattern as the trade before it."},
+  {day:38,style:'scalp',dir:'sell',lots:0.09,result:55.44,note:"Held a short through two AI warnings that gold was about to rip higher — it didn't. Nudged TP toward price three times as it kept refusing to tag the original target."},
+  {day:38,style:'scalp',dir:'sell',lots:0.09,result:-21.51,note:"Testing a tighter, feel-based entry; the stop was too close for that session's ATR. No amount of quick hands offsets that math."},
+  {day:38,style:'scalp',dir:'sell',lots:0.09,result:17.1,note:"Second test of the same read. Overnight spread and terminal lag made both the fill and the exit feel off — still closed green."},
+  {day:54,style:'scalp',dir:'buy',lots:0.07,result:41.9,note:"Pure feel — read the short-term swing and took it."},
+  {day:54,style:'scalp',dir:'buy',lots:0.07,result:46.4,note:"Same swing read, second bite in the same session."},
+  {day:54,style:'scalp',dir:'sell',lots:0.07,result:-136,note:"Gave the stop real room and still got run over. Cutting at 4514 turned out to matter — price broke out to 4536 shortly after, which would have been considerably worse."},
+  {day:54,style:'scalp',dir:'sell',lots:0.09,result:-27,note:"Split the size into two fills, moved the stop repeatedly against the move, floating loss touched –$222 at the worst point. Held anyway, convinced the top had been rejected three times — closed for –$27 net, better than it looked mid-trade."},
+  {day:54,style:'scalp',dir:'sell',lots:0.01,result:25.9,note:"Fat-fingered the size — 0.01 instead of an intended 0.09 — and left it running anyway as a free look at how far the move would carry."},
+  {day:54,style:'scalp',dir:'sell',lots:0.09,result:239.2,note:"Sized back in because price had pushed 42 points past where the earlier –$136 trade got stopped out — read that as exhaustion, not continuation. Gemini called it dangerous twice in a row and pushed to cut it. Held anyway. Price dipped to 4505 first, then gave the whole move back — closed at 4510.62, 23:15, same session. Biggest win in the log, and still inside the no-overnight rule."},
+  {day:55,style:'panic',dir:'sell',lots:0.09,result:-93.4},
+  {day:55,style:'panic',dir:'sell',lots:0.09,result:-157.2},
+  {day:55,style:'panic',dir:'sell',lots:0.09,result:-117.2},
+  {day:55,style:'panic',dir:'sell',lots:0.09,result:-41.5},
+  {day:55,style:'panic',dir:'sell',lots:0.09,result:-31.1},
+  {day:55,style:'panic',dir:'sell',lots:0.1,result:-17.5},
+  {day:55,style:'panic',dir:'sell',lots:0.12,result:34.9},
+  {day:55,style:'panic',dir:'sell',lots:0.1,result:-32.6},
+  {day:55,style:'panic',dir:'sell',lots:0.1,result:-35.8},
+  {day:55,style:'panic',dir:'sell',lots:0.3,result:-63.9,note:"The final trade of the sequence, after two missed limit fills 1–2 points above the exact top. Walked through in full in section 05, above."},
+];
+
+const regimeMeta = {
+  technical:{label:'Technical', color:'var(--muted)'},
+  scalp:{label:'Scalp', color:'var(--signal)'},
+  panic:{label:'Panic', color:'var(--loss)'},
+};
+function fmt(n){ return (n>=0?'+$':'–$')+Math.abs(n).toFixed(2); }
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=> reduced ? el.classList.add('in') : io.observe(el));
+
+/* ---------- scroll progress ---------- */
+const progress = document.getElementById('progress');
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement;
+  const pct = (h.scrollTop)/(h.scrollHeight - h.clientHeight) * 100;
+  progress.style.width = pct+'%';
+});
+
+/* ---------- hero: MINE animated replay ---------- */
+function animateNum(el, to, duration){
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min(1,(now-start)/duration);
+    const eased = 1-Math.pow(1-p,3);
+    const val = to*eased;
+    el.textContent = (val<0?'–$':'$') + Math.abs(val).toFixed(0);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+let heroPlayed = false;
+function playHeroLive(){
+  const NET_TARGET=-238, EQ_TARGET=-617, THRESH=-500, MAX=-700;
+  const tnet=document.getElementById('tnet'), teq=document.getElementById('teq');
+  const barnet=document.getElementById('barnet'), bareq=document.getElementById('bareq');
+  const threshline=document.getElementById('threshline'), foot=document.getElementById('termfoot');
+  const dur = reduced?0:2000;
+  if(reduced){ tnet.textContent='–$238'; teq.textContent='–$617'; }
+  else { animateNum(tnet, NET_TARGET, dur); animateNum(teq, EQ_TARGET, dur); }
+  requestAnimationFrame(()=>{
+    barnet.style.width = (Math.abs(NET_TARGET)/Math.abs(MAX)*100)+'%';
+    bareq.style.width = (Math.abs(EQ_TARGET)/Math.abs(MAX)*100)+'%';
+    threshline.style.left = (Math.abs(THRESH)/Math.abs(EQ_TARGET)*100)+'%';
+  });
+  foot.textContent = 'reading the wrong column for room to lose';
+  setTimeout(()=>{ foot.textContent='the daily-loss rule was already reading the second number'; }, dur+300);
+}
+function setHeroMode(mode){
+  document.getElementById('tab-live').classList.toggle('active', mode==='live');
+  document.getElementById('tab-demo').classList.toggle('active', mode==='demo');
+  document.getElementById('hero-live').hidden = mode!=='live';
+  document.getElementById('hero-demo').hidden = mode!=='demo';
+  if(mode==='live' && !heroPlayed){ heroPlayed=true; playHeroLive(); }
+}
+playHeroLive(); heroPlayed=true;
+
+function updateDemo(){
+  const net = parseFloat(document.getElementById('in-net').value);
+  const eq = parseFloat(document.getElementById('in-eq').value);
+  const lim = Math.abs(parseFloat(document.getElementById('in-lim').value)) || 500;
+  const verdict = document.getElementById('demo-verdict');
+  const barnet = document.getElementById('dbarnet'), bareq = document.getElementById('dbareq');
+  const threshline = document.getElementById('dthreshline');
+  if(isNaN(net) || isNaN(eq)){
+    barnet.style.width='0%'; bareq.style.width='0%'; threshline.style.left='50%';
+    verdict.innerHTML = 'assuming a daily limit of $<input type="number" class="term-inline-input" id="in-lim" value="'+lim+'" oninput="updateDemo()"> — type both numbers above';
+    return;
+  }
+  const maxScale = Math.max(Math.abs(net), Math.abs(eq), lim) * 1.15 || 1;
+  barnet.style.width = Math.min(100, Math.abs(net)/maxScale*100)+'%';
+  bareq.style.width = Math.min(100, Math.abs(eq)/maxScale*100)+'%';
+  threshline.style.left = Math.min(100, lim/maxScale*100)+'%';
+  let msg;
+  if(eq <= -lim && net > -lim){
+    msg = 'Net says –$'+Math.abs(net).toFixed(0)+'. Equity says –$'+Math.abs(eq).toFixed(0)+' — past the $'+lim+' limit your Net was never going to show you.';
+  } else if(eq <= -lim){
+    msg = 'Both numbers are already past the $'+lim+' limit.';
+  } else {
+    msg = 'Gap between them: $'+Math.abs(eq-net).toFixed(0)+'. Still inside a $'+lim+' limit — for now.';
+  }
+  verdict.innerHTML = msg + ' <span style="opacity:.6">(limit: $<input type="number" class="term-inline-input" id="in-lim" value="'+lim+'" oninput="updateDemo()">)</span>';
+}
+
+/* ---------- ledger (generic, reused for live + demo) ---------- */
+function buildLedgerInto(dataset, containerEl){
+  containerEl.innerHTML = '';
+  const groups = {};
+  dataset.forEach(t=>{
+    groups[t.style] = groups[t.style] || {n:0,wins:0,net:0};
+    groups[t.style].n++; groups[t.style].net += t.result;
+    if(t.result>0) groups[t.style].wins++;
+  });
+  const keys = ['technical','scalp','panic'].filter(k=>groups[k]);
+  if(keys.length===0) return false;
+  const maxAbs = Math.max(...keys.map(k=>Math.abs(groups[k].net)), 1);
+  keys.forEach(key=>{
+    const g = groups[key], meta = regimeMeta[key];
+    const pct = Math.round(g.wins/g.n*100);
+    const widthPct = (Math.abs(g.net)/maxAbs*48);
+    const row = document.createElement('div');
+    row.className='ledger-row';
+    row.title = meta.label+': '+g.n+' trade'+(g.n>1?'s':'')+', '+pct+'% win rate, net '+fmt(g.net);
+    row.innerHTML = `
+      <div><div class="r-name">${meta.label}</div><div class="r-meta">${g.n} trade${g.n>1?'s':''} · ${pct}% win</div></div>
+      <div class="r-bar-track"><div class="r-bar-mid"></div>
+        <div class="r-bar-fill" style="background:${meta.color}; width:0%; ${g.net>=0?'left:50%;':'right:50%;'}"></div></div>
+      <div class="r-result ${g.net>=0?'pos':'neg'}">${fmt(g.net)}</div>`;
+    containerEl.appendChild(row);
+    requestAnimationFrame(()=>{ const fill=row.querySelector('.r-bar-fill'); requestAnimationFrame(()=>{ fill.style.width=widthPct+'%'; }); });
+  });
+  return true;
+}
+buildLedgerInto(trades, document.getElementById('ledger'));
+buildLedgerInto(trades, document.getElementById('ledger-live'));
+
+/* ---------- grade table (section 03) ---------- */
+(function buildGradeTable(){
+  const tbody = document.getElementById('gradeTbody');
+  trades.filter(t=>t.grade).forEach(t=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.day}</td><td>${t.rr}</td><td>${t.score}</td>
+      <td><span class="gchip ${t.grade}">${t.grade}</span></td>
+      <td class="${t.result>=0?'result-pos':'result-neg'}">${fmt(t.result)}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+
+/* ---------- equity curve chart (section 04) ---------- */
+(function buildEquityChart(){
+  const svg = document.getElementById('eqChart');
+  const tooltip = document.getElementById('eqTooltip');
+  const wrap = document.getElementById('eqChartWrap');
+  const W=640, H=220, PADL=36, PADR=16, PADT=16, PADB=28;
+
+  function cumulative(day){
+    const rows = trades.filter(t=>t.day===day);
+    let cum=0; return rows.map((t,i)=>{ cum+=t.result; return {i:i+1, t, cum}; });
+  }
+  const d54 = cumulative(54), d55 = cumulative(55);
+  const allCums = [0, ...d54.map(p=>p.cum), ...d55.map(p=>p.cum)];
+  const yMax = Math.max(...allCums, 10), yMin = Math.min(...allCums, -10);
+  const xMax = Math.max(d54.length, d55.length);
+
+  function xPos(i){ return PADL + (i/xMax) * (W-PADL-PADR); }
+  function yPos(v){ return PADT + (1 - (v - yMin)/(yMax - yMin)) * (H-PADT-PADB); }
+
+  const zeroY = yPos(0);
+  let svgHTML = `<line x1="${PADL}" y1="${zeroY}" x2="${W-PADR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>`;
+  svgHTML += `<text x="${PADL-8}" y="${zeroY+4}" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="var(--muted-2)">$0</text>`;
+
+  function seriesPath(points, color, keyPrefix){
+    let path = 'M ' + xPos(0) + ' ' + zeroY;
+    points.forEach(p=>{ path += ' L ' + xPos(p.i) + ' ' + yPos(p.cum); });
+    let html = `<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    points.forEach(p=>{
+      html += `<circle class="eq-pt" data-key="${keyPrefix}-${p.i}" cx="${xPos(p.i)}" cy="${yPos(p.cum)}" r="4" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`;
+    });
+    return html;
+  }
+  svgHTML += seriesPath(d54, 'var(--win)', 'd54');
+  svgHTML += seriesPath(d55, 'var(--loss)', 'd55');
+  svg.innerHTML = svgHTML;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const pointData = {};
+  d54.forEach(p=> pointData['d54-'+p.i] = {day:54,...p});
+  d55.forEach(p=> pointData['d55-'+p.i] = {day:55,...p});
+
+  svg.querySelectorAll('.eq-pt').forEach(circle=>{
+    circle.addEventListener('mouseenter', (e)=>{
+      const key = circle.getAttribute('data-key');
+      const info = pointData[key];
+      const dir = info.t.dir==='buy'?'Buy':'Sell';
+      tooltip.innerHTML = `Day ${info.day} · trade ${info.i} · ${dir}<br>${fmt(info.t.result)} → <span class="tt-cum">cum ${fmt(info.cum)}</span>`;
+      const rect = svg.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const scaleX = rect.width / W, scaleY = rect.height / H;
+      const cx = parseFloat(circle.getAttribute('cx')) * scaleX + (rect.left - wrapRect.left);
+      const cy = parseFloat(circle.getAttribute('cy')) * scaleY + (rect.top - wrapRect.top);
+      tooltip.style.left = cx+'px';
+      tooltip.style.top = cy+'px';
+      tooltip.classList.add('show');
+    });
+    circle.addEventListener('mouseleave', ()=> tooltip.classList.remove('show'));
+  });
+})();
+
+/* ---------- breach gauge (interactive threshold) ---------- */
+const day55cum = (function(){ let cum=0; return trades.filter(t=>t.day===55).map(t=>{ cum+=t.result; return {t,cum}; }); })();
+const finalCum55 = day55cum[day55cum.length-1].cum;
+let gaugeBuilt = false;
+function renderGauge(limit){
+  const gaugefill=document.getElementById('gaugefill'), gaugethresh=document.getElementById('gaugethresh');
+  const gaugeval=document.getElementById('gaugeval'), status=document.getElementById('gaugestatus');
+  const ticksEl=document.getElementById('gaugeticks');
+  const MAXV = Math.max(limit*1.15, Math.abs(finalCum55)*1.1, 100);
+
+  gaugethresh.style.left = Math.min(100,(limit/MAXV*100))+'%';
+  gaugefill.style.width = Math.min(100,(Math.abs(finalCum55)/MAXV*100))+'%';
+  gaugeval.textContent = fmt(finalCum55);
+
+  let breachIdx = day55cum.findIndex(p => Math.abs(p.cum) >= limit);
+  ticksEl.innerHTML='';
+  day55cum.forEach((p,idx)=>{
+    const d = document.createElement('div');
+    d.className = 'g-tick ' + (p.t.result>=0?'win':'hit') + (breachIdx>=0 && idx===breachIdx?' breach':'');
+    d.title = 'Trade '+(idx+1)+' · '+fmt(p.t.result)+' · cumulative '+fmt(p.cum);
+    ticksEl.appendChild(d);
+  });
+
+  if(breachIdx>=0){
+    status.innerHTML = `At a $${limit} limit, closed P/L alone would've crossed it after <b>trade ${breachIdx+1}</b> of ${day55cum.length} — floating equity likely got there sooner.`;
+  } else {
+    status.innerHTML = `At a $${limit} limit, closed P/L never technically crosses it — floating equity is where the real breach would've shown first.`;
+  }
+  status.classList.add('show');
+}
+function onGaugeLimChange(){
+  const lim = Math.abs(parseFloat(document.getElementById('gauge-lim').value)) || 500;
+  renderGauge(lim);
+}
+const gaugeObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting && !gaugeBuilt){
+      gaugeBuilt = true;
+      const gaugeval = document.getElementById('gaugeval');
+      animateNum(gaugeval, finalCum55, reduced?0:1400);
+      setTimeout(()=> renderGauge(500), reduced?0:200);
+      gaugeObs.disconnect();
+    }
+  });
+},{threshold:0.4});
+gaugeObs.observe(document.querySelector('.gauge-wrap'));
+
+/* ---------- explore: live/demo toggle ---------- */
+function setExploreMode(mode){
+  document.getElementById('etab-live').classList.toggle('active', mode==='live');
+  document.getElementById('etab-demo').classList.toggle('active', mode==='demo');
+  document.getElementById('explore-live').hidden = mode!=='live';
+  document.getElementById('explore-demo').hidden = mode!=='demo';
+}
+
+/* ---------- LIVE table ---------- */
+let currentFilter='all', sortKey='day', sortDir=1;
+function buildFilters(){
+  const opts=['all','technical','scalp','panic'];
+  const el=document.getElementById('filters');
+  opts.forEach(o=>{
+    const btn=document.createElement('button');
+    btn.className='chip'+(o===currentFilter?' active':'');
+    btn.textContent = o==='all'?'All':regimeMeta[o].label;
+    btn.onclick=()=>{ currentFilter=o; renderTable(); [...el.children].forEach(c=>c.classList.remove('active')); btn.classList.add('active'); };
+    el.appendChild(btn);
+  });
+}
+function renderTable(){
+  let rows = currentFilter==='all'?trades.slice():trades.filter(t=>t.style===currentFilter);
+  rows.sort((a,b)=>{
+    const av=a[sortKey], bv=b[sortKey];
+    if(av>bv) return sortDir;
+    if(av<bv) return -sortDir;
+    return 0;
+  });
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  rows.forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.className = t.note ? 'trade-row has-note' : 'trade-row';
+    tr.innerHTML = `<td>${t.note?'<span class="note-toggle">+</span>':''}${t.day}</td><td><span class="tag ${t.style}">${regimeMeta[t.style].label}</span></td>
+      <td style="text-transform:capitalize;">${t.dir}</td><td>${t.lots.toFixed(2)}</td>
+      <td class="${t.result>=0?'pos':'neg'}">${fmt(t.result)}</td>`;
+    tbody.appendChild(tr);
+    if(t.note){
+      const nr = document.createElement('tr');
+      nr.className = 'note-row';
+      nr.hidden = true;
+      nr.innerHTML = `<td colspan="5">${t.note}</td>`;
+      tbody.appendChild(nr);
+      tr.addEventListener('click', ()=>{
+        nr.hidden = !nr.hidden;
+        tr.querySelector('.note-toggle').textContent = nr.hidden ? '+' : '–';
+      });
+    }
+  });
+  document.getElementById('tbl-count').textContent = rows.length+' shown';
+}
+document.querySelectorAll('#explore-live thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key=th.dataset.key;
+    if(sortKey===key){ sortDir*=-1; } else { sortKey=key; sortDir=1; }
+    renderTable();
+  });
+});
+buildFilters();
+renderTable();
+
+/* ---------- DEMO trades ---------- */
+let demoTrades = [];
+function renderDemo(){
+  const empty = document.getElementById('demo-empty');
+  const tableWrap = document.getElementById('demo-table-wrap');
+  const ledgerEl = document.getElementById('demo-ledger');
+  const hasData = demoTrades.length>0;
+  empty.style.display = hasData ? 'none' : 'block';
+  tableWrap.hidden = !hasData;
+  ledgerEl.style.display = hasData ? 'block' : 'none';
+  if(hasData) buildLedgerInto(demoTrades, ledgerEl);
+  const tbody = document.getElementById('demo-tbody');
+  tbody.innerHTML = '';
+  demoTrades.forEach((t,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td><span class="tag ${t.style}">${regimeMeta[t.style].label}</span></td>
+      <td style="text-transform:capitalize;">${t.dir}</td><td>${t.lots.toFixed(2)}</td>
+      <td class="${t.result>=0?'pos':'neg'}">${fmt(t.result)}</td>
+      <td><button class="demo-del" onclick="removeDemoTrade(${i})" aria-label="Remove trade">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function addDemoTrade(){
+  const style = document.getElementById('d-style').value;
+  const dir = document.getElementById('d-dir').value;
+  const lots = parseFloat(document.getElementById('d-lots').value);
+  const result = parseFloat(document.getElementById('d-result').value);
+  if(isNaN(lots) || isNaN(result) || lots<=0){
+    document.getElementById('d-lots').focus();
+    return;
+  }
+  demoTrades.push({day:demoTrades.length+1, style, dir, lots, result});
+  document.getElementById('d-lots').value='';
+  document.getElementById('d-result').value='';
+  renderDemo();
+}
+function removeDemoTrade(i){ demoTrades.splice(i,1); renderDemo(); }
+function resetDemo(){ demoTrades = []; renderDemo(); }
+renderDemo();
+</script>
